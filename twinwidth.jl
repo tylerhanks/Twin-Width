@@ -21,10 +21,22 @@ function closed_neighborhood(g, v1, v2)
     nv1 = collect(neighbors(gm, v1))
     nv2 = collect(neighbors(gm, v2))
 
-    
+    # Get closed neighborhood of union of vertices
+    vs = vcat(v1, v2, union(nv1, nv2))
+
+    es1 = foldl((acc, x) -> vcat(acc, collect(edges(g, v1, x))), nv1; init=Int64[])
+    es2 = foldl((acc, x) -> vcat(acc, collect(edges(g, v2, x))), nv2; init=Int64[])
+
+    println(es1)
+    println(es2)
 
 
+    es1 = vcat(es1, map(x -> inv(g, x), es1), [g[:refl][v1]])
+    es2 = vcat(es2, map(x -> inv(g, x), es2), [g[:refl][v2]])
 
+    es = union(es1, es2)
+
+    return Subobject(G, V=vs, E=es)
 end
 
 
