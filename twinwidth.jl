@@ -12,29 +12,23 @@ function remove_parallel_edges(g::SymmetricReflexiveGraph)
 # Can we just delete anything not in the image of the morphism?!
 end
 
-function closed_neighborhood(g, v1, v2)
+concatMap(f, xs) = vcat(map(f, xs)...)
+
+function closed_neighborhood(g, vs_in)
     # This is because Catlab doesn't define neighbors for SRGs for some reason?
     F = FinFunctor(Dict(:V => :V, :E => :E), Dict(:src => :src, :tgt => :tgt, :inv => :inv), SchSymmetricGraph, SchSymmetricReflexiveGraph)
     ΔF = DeltaMigration(F)
     gm = migrate(SymmetricGraph, g, ΔF)
-
-    nv1 = collect(neighbors(gm, v1))
-    nv2 = collect(neighbors(gm, v2))
-
-    # Get closed neighborhood of union of vertices
-    vs = vcat(v1, v2, union(nv1, nv2))
-
-    es1 = foldl((acc, x) -> vcat(acc, collect(edges(g, v1, x))), nv1; init=Int64[])
-    es2 = foldl((acc, x) -> vcat(acc, collect(edges(g, v2, x))), nv2; init=Int64[])
-
-    println(es1)
-    println(es2)
-
-
-    es1 = vcat(es1, map(x -> inv(g, x), es1), [g[:refl][v1]])
-    es2 = vcat(es2, map(x -> inv(g, x), es2), [g[:refl][v2]])
-
-    es = union(es1, es2)
+    #list of neighbors of each v ∈ vs
+    nvs = map( v -> collect(neighbors(gm, v)) , vs_in)
+    # {v ∈ vs_in } ⋃ ⋃ᵥ N(v)
+    vs = vcat(vs_in, foldl(union, nvs))
+    println(vs)
+    #give me all the edges :) 
+    q = (v, ns) -> foldl((acc, x) -> vcat(acc, collect(edges(g, v, x))), ns; init=Int64[])
+    out_edges = concatMap(t -> q(t...), zip(vs_in, nvs))
+    #   {v->y | v ∈ vs_in}    ∪    {z -> v | v ∈ vs_in}      ∪   {v->v | v ∈ vs_in}
+    es = vcat(out_edges,      map(x -> inv(g, x), out_edges),    map(x -> g[:refl][x], vs_in))
 
     return Subobject(G, V=vs, E=es)
 end
@@ -54,13 +48,10 @@ function contract_vertices(g, v1, v2)
 
     common_neighbors = filter(x -> x in nv2, nv1)
 
-    println(common_neighbors)
+    #println(common_neighbors)
 
     es1 = foldl((acc, x) -> vcat(acc, collect(edges(g, v1, x))), common_neighbors; init=Int64[])
     es2 = foldl((acc, x) -> vcat(acc, collect(edges(g, v2, x))), common_neighbors; init=Int64[])
-
-    println(es1)
-    println(es2)
 
 
     es1 = vcat(es1, map(x -> inv(g, x), es1), [g[:refl][v1]])
