@@ -110,10 +110,10 @@ function black_edges(g, v1, v2)
     e = equalizer(p1 ⋅ i ⋅ f, p2 ⋅ i ⋅ f)
 
     b = legs(e)[1]
-
+ 
+    #Subobject(g, V=map(x -> legs(img)[1][:V](x), vertices(apex(img))), E=map(e -> legs(img)[1][:E](e), edges(apex(img))))
     return image(b ⋅ p1 ⋅ i ⋅ f)
 end
-
 
 # Tests
 G = @acset SymmetricReflexiveGraph begin
